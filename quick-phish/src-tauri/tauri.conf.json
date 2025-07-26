@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "quick-phish",
-        "width": 800,
-        "height": 600
+        "dragDropEnabled": true,
+        "title": "QuickPhish",
+        "width": 1100,
+        "height": 700
       }
     ],
     "security": {
