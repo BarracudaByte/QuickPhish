@@ -14,7 +14,7 @@
             directory: false,
         });
         console.log(`Open file: ${file}`);
-        invoke('load_eml', { uri: file }).then((data) => eml = data);
+        invoke('load_eml', { uri: file }).then((data) => eml = data );
     }
 
 
@@ -27,10 +27,15 @@
 </div>-->
 
 <div class="p-2">
-    {#if eml["Body"] }
+    {#if eml.body }
         <h1 class="text-lg">Analysis Results</h1>
+
         <h2 class="text-lg">Summary</h2>
-        <p>The email was sent from {eml["From"]} to {eml["To"]} with subject '{eml["Subject"]}'</p>
+        <div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 font-mono font-light text-sm">
+            {eml.summary}
+            <!--<p>The email was sent from {eml.from} to {eml.to} with subject '{eml.subject}'</p>-->
+        </div>
+
         <h2 class="text-lg">Headers</h2>
         <div class="border-x rounded-lg border-slate-200 dark:border-slate-700 relative overflow-y-auto max-h-96">
             <table class="table-fixed w-full border-collapse">
@@ -41,13 +46,13 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700 overflow-y-auto">
-                    {#each Object.entries(eml) as [k, v]}
-                        {#if !["Body", "Subject", "To", "From"].includes(k) }
+                    {#each Object.entries(eml.headers) as [k, v]}
+                        <!--{#if !["Body", "Subject", "To", "From"].includes(k) }-->
                             <tr class="">
                                 <td class="px-4 py-3 text-sm font-medium max-w-sm whitespace-nowrap overflow-x-auto">{k}</td>
                                 <td class="px-4 py-3 text-sm whitespace-nowrap max-w-[50%] overflow-x-auto">{v}</td>
                             </tr>
-                        {/if}
+                        <!--{/if}-->
                     {/each}
                 </tbody>
             </table>

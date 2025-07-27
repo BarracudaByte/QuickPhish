@@ -5,7 +5,7 @@
     const tabs = ['Analysis', 'Templates', 'Settings'];
 </script>
 
-<div class="flex flex-col gap-2 p-2 font-light text-sm bg-zinc-50 dark:bg-zinc-900 text-black dark:text-white h-screen min-w-48 border-zinc-100 dark:border-black border-r">
+<div class="flex flex-col gap-2 p-2 font-light text-sm bg-zinc-50 dark:bg-zinc-900 text-black dark:text-white h-screen min-w-48 border-zinc-300 dark:border-black border-r">
     {#each tabs as tab, i}
         <button onclick={() => nav.tab = i} class="text-left items-center flex gap-1 p-1 rounded hover:bg-zinc-100 hover:dark:bg-zinc-800 cursor-pointer {nav.tab == i ? 'bg-zinc-100 dark:bg-zinc-800' : ''}">
             {#if i == 0}

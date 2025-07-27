@@ -1,12 +1,12 @@
-use tauri::ipc::Response;
-use tauri::{Manager, State};
-use tauri::Wry;
-use tauri_plugin_store::{StoreBuilder, Store, StoreExt};
+//use tauri::ipc::Response;
+use tauri::Manager; // State
+use tauri_plugin_store::StoreExt;
 use std::sync::{Arc, Mutex}; 
 
 mod analysis_commands;
 mod template_commands;
-
+mod indicators;
+mod parsed_eml;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

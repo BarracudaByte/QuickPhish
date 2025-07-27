@@ -1,19 +1,25 @@
 use serde_json::json;
-use tauri::{AppHandle, State};
-use tauri_plugin_store::{StoreBuilder, Store, StoreExt};
+use tauri::AppHandle; // State
+use tauri_plugin_store::StoreExt; // StoreBuilder, Store, 
 
-const SUMARY_TEMPLATE: &'static str = "summary_template";
+pub const SUMARY_TEMPLATE: &'static str = "summary_template";
 
-#[tauri::command]
-pub fn get_summary_template(app_handle: AppHandle) -> serde_json::Value {
+
+pub fn get_template(name: &str, app_handle: &AppHandle) -> serde_json::Value {
     let store = app_handle.store("app_data.json");
 
     let default_template = json!({ "template": "NA" });
     if store.is_ok() {
-        return store.unwrap().get(SUMARY_TEMPLATE).unwrap_or(default_template);
+        return store.unwrap().get(name).unwrap_or(default_template);
     }
 
     return default_template;
+}
+
+
+#[tauri::command]
+pub fn get_summary_template(app_handle: AppHandle) -> serde_json::Value {
+    return get_template(SUMARY_TEMPLATE, &app_handle);
 }
 
 #[tauri::command]

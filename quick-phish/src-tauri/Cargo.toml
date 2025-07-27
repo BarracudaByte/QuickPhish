@@ -27,4 +27,6 @@ tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
 eml-parser = "0.1.4"
 tauri-plugin-store = "2"
+linkify = "0.10.0"
+minijinja = "2.11.0"
 
