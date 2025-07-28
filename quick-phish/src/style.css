@@ -5,12 +5,15 @@
         @apply text-xl text-lime-500 select-none font-medium;
     }
     h2 {
-        @apply text-lg text-indigo-500 select-none font-light;
+        @apply text-lg text-indigo-500 select-none font-light mt-2;
     }
     h3 {
-        @apply text-base text-amber-500 select-none font-light;
+        @apply text-base text-amber-500 select-none font-light mt-1;
     }
     p {
         @apply text-sm text-black dark:text-white font-light
+    }
+    a {
+        @apply text-cyan-600 dark:text-cyan-500 underline decoration-cyan-600 dark:decoration-cyan-500;
     }
 }

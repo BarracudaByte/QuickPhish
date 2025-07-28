@@ -1,8 +1,13 @@
 use eml_parser::eml::{EmailAddress, HeaderFieldValue};
 use eml_parser::parser::EmlParser;
 use linkify::{LinkFinder, LinkKind};
+use mailparse::{MailHeaderMap, ParsedMail};
 use minijinja::{Environment, context};
 use serde_json::json;
+use std::fs;
+use std::fs::File;
+use std::io::Read;
+use std::str;
 use tauri::AppHandle;
 
 use crate::indicators::Indicators;
@@ -28,9 +33,9 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
     finder.url_must_have_scheme(with_scheme);
     finder.links(text).for_each(|link| {
         if *link.kind() == LinkKind::Url {
-            indicators.urls.push(link.as_str().to_string())
+            indicators.urls.insert(link.as_str().to_string());
         } else if *link.kind() == LinkKind::Email {
-            indicators.emails.push(link.as_str().to_string())
+            indicators.emails.insert(link.as_str().to_string());
         }
     });
     return indicators;
@@ -50,12 +55,50 @@ fn render_summary(eml: &ParsedEml, app_handle: &AppHandle) -> String {
     return default_template.to_string();
 }
 
+fn parse_body(eml: &ParsedMail) -> String {
+    if eml.ctype.mimetype == "multipart/alternative" {
+        let last_part = eml.subparts.last();
+        if last_part.is_some() {
+            return parse_body(last_part.unwrap());
+        } else {
+            return format!("No body I guess");
+        }
+    } else {
+        let body = match eml.get_body() {
+            Ok(b) => b,
+            Err(e) => format!("{:?}", e)
+        };
+        return body
+    }
+    
+}
+
+
 #[tauri::command]
-pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value { // HashMap<String, String>
-    //let mut data: HashMap<String, String> = HashMap::new();
-    //let data = std::fs::read(&uri).unwrap();
-    // tauri::ipc::Response::new(eml) -> use with return Response
-    let eml = EmlParser::from_file(&uri).unwrap().parse().unwrap(); // .ignore_body()
+pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value { 
+    let file = File::open(uri);
+    if file.is_err() {
+        return json!({"error": "Coudln't open the file."});
+    }
+    let mut file = file.unwrap();
+
+    let mut buffer: Vec<u8> = Vec::new();
+    let read_result = file.read_to_end(&mut buffer);
+    let parsed = mailparse::parse_mail(&buffer);
+    if parsed.is_err() {
+        return json!({"error": "Coudln't parse the file."});
+    }
+    let parsed = parsed.unwrap(); 
+    
+    let contents = fs::read_to_string(&uri);
+    if contents.is_err() {
+        return json!({"error": "Coudln't open the file 2."});
+    }
+    let iocs: Indicators = find_iocs(&contents.unwrap(), true);
+
+    /*parse_eml(&uri);
+
+    let eml = EmlParser::from_file(&uri).ignore_body().unwrap().parse().unwrap(); // 
     let from: HeaderFieldValue = eml.from.unwrap_or(HeaderFieldValue::Empty);
     let to: HeaderFieldValue = eml.to.unwrap_or(HeaderFieldValue::Empty);
     let body = eml.body.unwrap_or_default();
@@ -75,10 +118,29 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value { // Hash
     parsed_eml.headers.insert("From".to_string(), from.to_string());
     parsed_eml.headers.insert("To".to_string(), to.to_string());
     parsed_eml.headers.insert("Subject".to_string(), subject.to_string());
+    */
+
+    // TODO: better header parser: https://docs.rs/mailparse/latest/mailparse/fn.addrparse_header.html
+    let subject = parsed.get_headers().get_first_value("Subject").unwrap_or_default();
+    let from = parsed.get_headers().get_first_value("From").unwrap_or_default();
+    let to = parsed.get_headers().get_first_value("To").unwrap_or_default();
+    /*let body_maybe = String::from_utf8(parsed.get_body_raw().unwrap());
+    let body = match body_maybe {
+        Ok(b) => b.to_string(),
+        Err(e) => format!("{:?}", e)
+    };
+    */
+    let body = parse_body(&parsed);
+    //let body = format!("Subparts: {}. Content: {}", parsed.subparts.len(), parsed.ctype.mimetype);
+
+    let mut parsed_eml = ParsedEml::new(body, from, to, subject, iocs);
+    parsed.headers.iter().for_each(|header| {
+        parsed_eml.headers.insert(header.get_key(), header.get_value());
+    });
 
     // Template Logic
     let summary: String = render_summary(&parsed_eml, &app_handle);
     let parsed_eml_json = parsed_eml.to_json_with(summary);
-
+    
     return parsed_eml_json;
 }

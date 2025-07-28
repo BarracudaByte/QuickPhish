@@ -1,18 +1,19 @@
 use serde::Serialize;
 use serde_json::json;
+use std::collections::HashSet;
 
  
 #[derive(Serialize)]
 pub struct Indicators {
-    pub urls: Vec<String>,
-    pub emails: Vec<String>
+    pub urls: HashSet<String>,
+    pub emails: HashSet<String>
 }
 
 impl Indicators {
     pub fn new() -> Self {
         Self {
-            urls: Vec::new(),
-            emails: Vec::new(),
+            urls: HashSet::new(),
+            emails: HashSet::new(),
         }
     }
 

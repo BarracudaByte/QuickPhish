@@ -29,4 +29,5 @@ eml-parser = "0.1.4"
 tauri-plugin-store = "2"
 linkify = "0.10.0"
 minijinja = "2.11.0"
+mailparse = "0.16.1"
 
