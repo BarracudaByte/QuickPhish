@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 @layer base {  
+    body {
+        @apply text-sm;
+    }
     h1 {
-        @apply text-xl text-lime-500 select-none font-medium;
+        @apply text-base text-zinc-700 dark:text-zinc-300 select-none font-black;
     }
     h2 {
-        @apply text-lg text-indigo-500 select-none font-light mt-2;
+        @apply text-sm text-zinc-600 dark:text-zinc-400 select-none font-bold mt-3 mb-1;
     }
     h3 {
-        @apply text-base text-amber-500 select-none font-light mt-1;
+        @apply text-sm text-zinc-500 dark:text-zinc-500 select-none font-light mt-2 mb-1;
     }
     p {
         @apply text-sm text-black dark:text-white font-light

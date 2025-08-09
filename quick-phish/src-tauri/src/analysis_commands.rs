@@ -1,6 +1,7 @@
 use eml_parser::eml::{EmailAddress, HeaderFieldValue};
 use eml_parser::parser::EmlParser;
 use linkify::{LinkFinder, LinkKind};
+use mail_auth::{MessageAuthenticator, AuthenticatedMessage, DkimResult};
 use mailparse::{MailHeaderMap, ParsedMail};
 use minijinja::{Environment, context};
 use serde_json::json;
@@ -9,8 +10,10 @@ use std::fs::File;
 use std::io::Read;
 use std::str;
 use tauri::AppHandle;
+use tauri::async_runtime::block_on;
 
 use crate::indicators::Indicators;
+use crate::header_verification::HeaderVerification;
 use crate::parsed_eml::ParsedEml;
 use crate::template_commands::{get_template, SUMARY_TEMPLATE};
 
@@ -73,6 +76,25 @@ fn parse_body(eml: &ParsedMail) -> String {
     
 }
 
+async fn verify_headers(msg: &Vec<u8>) -> HeaderVerification {
+    let mut header_verification = HeaderVerification::new();
+    let authenticator = MessageAuthenticator::new_cloudflare_tls().unwrap();
+    let authenticated_message = AuthenticatedMessage::parse(msg).unwrap();
+
+    // Validate DKIM Signature
+    let result = authenticator.verify_dkim(&authenticated_message).await;
+    let dkim_pass = result.iter().all(|s| s.result() == &DkimResult::Pass);
+    header_verification.dkim = dkim_pass;
+
+    // Validate ARC chain
+    let result = authenticator.verify_arc(&authenticated_message).await;
+    header_verification.arc = result.result() == &DkimResult::Pass;
+
+    // TODO: add SPF & DMARC
+
+    return header_verification;
+}   
+
 
 #[tauri::command]
 pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value { 
@@ -85,6 +107,7 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     let mut buffer: Vec<u8> = Vec::new();
     let read_result = file.read_to_end(&mut buffer);
     let parsed = mailparse::parse_mail(&buffer);
+    let header_verification = block_on(verify_headers(&buffer));
     if parsed.is_err() {
         return json!({"error": "Coudln't parse the file."});
     }
@@ -140,7 +163,7 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
 
     // Template Logic
     let summary: String = render_summary(&parsed_eml, &app_handle);
-    let parsed_eml_json = parsed_eml.to_json_with(summary);
+    let parsed_eml_json = parsed_eml.to_json_with(summary, header_verification);
     
     return parsed_eml_json;
 }

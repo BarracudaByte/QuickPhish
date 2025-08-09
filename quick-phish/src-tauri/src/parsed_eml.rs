@@ -3,6 +3,7 @@ use serde_json::json;
 use std::collections::HashMap;
 
 use crate::indicators::Indicators;
+use crate::header_verification::HeaderVerification;
 
  
 #[derive(Serialize)]
@@ -31,7 +32,7 @@ impl ParsedEml {
         json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json() })
     }
 
-    pub fn to_json_with(&self, summary: String) -> serde_json::Value {
-        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json(), "summary": summary })
+    pub fn to_json_with(&self, summary: String, header_verification: HeaderVerification) -> serde_json::Value {
+        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json(), "summary": summary, "headerVerify": header_verification.to_json() })
     }
 }

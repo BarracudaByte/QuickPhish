@@ -7,6 +7,7 @@ mod analysis_commands;
 mod template_commands;
 mod indicators;
 mod parsed_eml;
+mod header_verification;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

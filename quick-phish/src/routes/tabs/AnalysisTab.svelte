@@ -27,15 +27,15 @@
 
 <div class="p-2">
     {#if eml.subject || eml.body }
-        <h1 class="text-lg">Analysis Results</h1>
+        <h1>Analysis Results</h1>
 
-        <h2 class="text-lg">Summary</h2>
+        <h2>Summary</h2>
         <div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 font-mono font-light text-sm">
             {eml.summary}
             <!--<p>The email was sent from {eml.from} to {eml.to} with subject '{eml.subject}'</p>-->
         </div>
 
-        <h2 class="text-lg">Headers</h2>
+        <h2>Headers</h2>
         <div class="border rounded-lg border-slate-200 dark:border-slate-700 relative overflow-y-auto max-h-96">
             <table class="table-fixed w-full border-collapse">
                 <thead class="sticky top-0 z-10 bg-slate-200 dark:bg-slate-700">
@@ -81,7 +81,7 @@
         <p>Error: {eml.error}</p>
     {/if}
 
-    <button on:click={openFile} class="text-blue-500 hover:text-blue-600 cursor-pointer">Open .eml</button>
+    <button onclick={openFile} class="text-blue-500 hover:text-blue-600 cursor-pointer">Open .eml</button>
 
 
     <!--<p>EML: {JSON.stringify(eml)}</p>-->
