@@ -11,6 +11,8 @@
     "fs:default",
     "dialog:default",
     "clipboard-manager:default",
-    "store:default"
+    "store:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
   ]
 }

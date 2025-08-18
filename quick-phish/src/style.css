@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {  
     body {
         @apply text-sm;
     }
     h1 {
-        @apply text-base text-zinc-700 dark:text-zinc-300 select-none font-black;
+        @apply text-base text-zinc-700 dark:text-zinc-300 select-none font-black mt-3;
     }
     h2 {
         @apply text-sm text-zinc-600 dark:text-zinc-400 select-none font-bold mt-3 mb-1;

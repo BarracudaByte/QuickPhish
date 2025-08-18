@@ -32,7 +32,7 @@ impl ParsedEml {
         json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json() })
     }
 
-    pub fn to_json_with(&self, summary: String, header_verification: HeaderVerification) -> serde_json::Value {
-        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json(), "summary": summary, "headerVerify": header_verification.to_json() })
+    pub fn to_json_with(&self, summary: String, header_verification: HeaderVerification, score: u8) -> serde_json::Value {
+        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json(), "summary": summary, "headerVerify": header_verification.to_json(), "score": score })
     }
 }

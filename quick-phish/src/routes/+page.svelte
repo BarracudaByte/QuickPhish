@@ -6,6 +6,8 @@
     import FileUpload from "./analysis/FileUpload.svelte";
     import AnalysisTab from "./tabs/AnalysisTab.svelte";
     import TemplatesTab from "./tabs/TemplatesTab.svelte";
+    import ListTab from "./tabs/ListTab.svelte";
+    import SettingsTab from "./tabs/SettingsTab.svelte";
 
     let name = $state("");
     let greetMsg = $state("");
@@ -25,7 +27,9 @@
     {:else if nav.tab == 1 }
       <TemplatesTab />
     {:else if nav.tab == 2 }
-      <p>Actual Content. Currently selected tab: {nav.tab}</p>
+      <ListTab />
+    {:else if nav.tab == 3 }
+      <SettingsTab />
     {/if}
   </div>
 </div>

@@ -4,7 +4,7 @@ use tauri_plugin_store::StoreExt;
 use std::sync::{Arc, Mutex}; 
 
 mod analysis_commands;
-mod template_commands;
+mod store_commands;
 mod indicators;
 mod parsed_eml;
 mod header_verification;
@@ -29,7 +29,14 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![analysis_commands::load_eml, template_commands::get_summary_template, template_commands::update_summary_template])
+        .invoke_handler(tauri::generate_handler![
+            analysis_commands::load_eml, 
+            store_commands::get_summary_template, 
+            store_commands::update_summary_template,
+            store_commands::get_lists,
+            store_commands::update_list
+            ]
+        )
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

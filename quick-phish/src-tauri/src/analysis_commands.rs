@@ -15,7 +15,7 @@ use tauri::async_runtime::block_on;
 use crate::indicators::Indicators;
 use crate::header_verification::HeaderVerification;
 use crate::parsed_eml::ParsedEml;
-use crate::template_commands::{get_template, SUMARY_TEMPLATE};
+use crate::store_commands::{get_template, SUMARY_TEMPLATE};
 
 
 fn parse_header_field_value(header_field: &HeaderFieldValue) -> Option<String> {
@@ -58,13 +58,22 @@ fn render_summary(eml: &ParsedEml, app_handle: &AppHandle) -> String {
     return default_template.to_string();
 }
 
-fn parse_body(eml: &ParsedMail) -> String {
+fn parse_body(eml: &ParsedMail, simple_text: bool) -> String {
     if eml.ctype.mimetype == "multipart/alternative" {
-        let last_part = eml.subparts.last();
-        if last_part.is_some() {
-            return parse_body(last_part.unwrap());
+        if simple_text {
+            let first_part = eml.subparts.first();
+            if first_part.is_some() {
+                return parse_body(first_part.unwrap(), simple_text);
+            } else {
+                return format!("No body I guess");
+            }
         } else {
-            return format!("No body I guess");
+            let last_part = eml.subparts.last();
+            if last_part.is_some() {
+                return parse_body(last_part.unwrap(), simple_text);
+            } else {
+                return format!("No body I guess");
+            }
         }
     } else {
         let body = match eml.get_body() {
@@ -153,7 +162,8 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
         Err(e) => format!("{:?}", e)
     };
     */
-    let body = parse_body(&parsed);
+    let simple_text = false;
+    let body = parse_body(&parsed, simple_text);
     //let body = format!("Subparts: {}. Content: {}", parsed.subparts.len(), parsed.ctype.mimetype);
 
     let mut parsed_eml = ParsedEml::new(body, from, to, subject, iocs);
@@ -162,8 +172,9 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     });
 
     // Template Logic
+    let score = 1;
     let summary: String = render_summary(&parsed_eml, &app_handle);
-    let parsed_eml_json = parsed_eml.to_json_with(summary, header_verification);
+    let parsed_eml_json = parsed_eml.to_json_with(summary, header_verification, score);
     
     return parsed_eml_json;
 }
