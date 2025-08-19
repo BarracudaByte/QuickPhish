@@ -102,17 +102,16 @@
             <!-- Risk Score -->
             <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 pb-2">
                 <div class="flex">
-                    <h2 class="">Risk Score: {eml.score}</h2>
+                    <h2 class="">Risk Score: {eml.riskScore.score}</h2>
                     <span class="relative flex size-3 mt-3 ms-2">
                         <span class="absolute inline-flex h-full w-full animate-ping rounded-full {eml.score == 0 ? 'bg-lime-400' : (eml.score == 1 ? 'bg-amber-400' : 'bg-rose-400')} opacity-75"></span>
                         <span class="relative inline-flex size-3 rounded-full {eml.score == 0 ? 'bg-lime-500' : (eml.score == 1 ? 'bg-amber-500' : 'bg-rose-500')}"></span>
                     </span>
                 </div>
                 <ul class="text-sm list-disc ms-4">
-                    <li>No Attachments</li>
-                    <li>Multiple URLs</li>
-                    <li>No Grammar Issues</li>
-                    <li>Potentially spoofed sender</li>
+                    {#each eml.riskScore.reasons as reason }
+                        <li>{reason}</li>
+                    {/each }
                 </ul>
             </div>
 

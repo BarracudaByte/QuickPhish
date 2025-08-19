@@ -1,4 +1,4 @@
-use eml_parser::eml::{EmailAddress, HeaderFieldValue};
+use eml_parser::eml::{EmailAddress, HeaderFieldValue, HeaderField};
 use eml_parser::parser::EmlParser;
 use linkify::{LinkFinder, LinkKind};
 use mail_auth::{MessageAuthenticator, AuthenticatedMessage, DkimResult};
@@ -13,6 +13,7 @@ use tauri::AppHandle;
 use tauri::async_runtime::block_on;
 
 use crate::indicators::Indicators;
+use crate::risk_data::RiskScore;
 use crate::header_verification::HeaderVerification;
 use crate::parsed_eml::ParsedEml;
 use crate::store_commands::{get_template, SUMARY_TEMPLATE};
@@ -28,6 +29,83 @@ fn parse_header_field_value(header_field: &HeaderFieldValue) -> Option<String> {
         HeaderFieldValue::Unstructured(value) => Some(value.clone()),
         HeaderFieldValue::Empty => None,
     }
+}
+
+fn calculate_risk_score(iocs: &Indicators, from: Option<String>, headers: &Vec<HeaderField>, header_verification: &HeaderVerification) -> RiskScore {
+    let mut risk_score = RiskScore::new();
+    let mut score = 0;
+    // if there are URLs in the email increase score
+    let num_of_urls = iocs.urls.len();
+    if num_of_urls > 0 {
+        score += 25;
+        risk_score.reasons.push(format!("Email has {num_of_urls} unique urls"))
+    }
+    // TODO: check how many unique URLs
+
+    // if the From and Reply-To, Return-Path have different domains increase score
+    let mut reply_to: Option<String> = None;
+    let mut return_path: Option<String> = None;
+    headers.iter().for_each(|header| {
+        if header.name == "Reply-To" {
+            reply_to = parse_header_field_value(&header.value);
+        } else if header.name == "Return-Path" {
+            return_path = parse_header_field_value(&header.value);
+        }
+    });
+
+    if let Some(from) = from {
+        let from_fqdn: &str = from.split("@").collect::<Vec<_>>()[1];
+
+        // are the reply_to and the return_path domains the same as the from?
+        if let Some(reply_to) = reply_to {
+            if reply_to.ends_with(from_fqdn) {
+                score -= 5;
+                risk_score.reasons.push(format!("The reply to domain is the same as the sender (from) domain"));
+            } else {
+                score += 5;
+                risk_score.reasons.push(format!("Different reply to domain than sender domain"));
+            }
+        }
+
+        if let Some(return_path) = return_path {
+            if return_path.ends_with(from_fqdn) {
+                score -= 5;
+                risk_score.reasons.push(format!("The return path domain is the same as the sender (from) domain"));
+            } else {
+                score += 5;
+                risk_score.reasons.push(format!("Different return path domain than sender domain"));
+            }
+        }
+
+        // if the sender domain is in the urls, reduce score
+        if iocs.urls.contains(from_fqdn) {
+            score -= 5;
+            risk_score.reasons.push(format!("The sender (from) domain is also in the URLs"));
+        }
+    }
+
+    // DKIM
+    if !header_verification.dkim {
+        let dkim_header = headers.iter().find(|&header| header.name == "DKIM-Signature");
+        if dkim_header.is_some() {
+            risk_score.reasons.push(format!("Invalid DKIM signature"));
+        } else {
+            risk_score.reasons.push(format!("No DKIM signature header"));
+        }
+        score += 5;
+    }
+
+    // ARC
+    if !header_verification.arc {
+        score += 5;
+        risk_score.reasons.push(format!("Failed ARC chain verification"));
+    }
+    
+    
+
+    // updating the score
+    risk_score.score = score;
+    return risk_score;
 }
 
 fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
@@ -128,6 +206,8 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     }
     let iocs: Indicators = find_iocs(&contents.unwrap(), true);
 
+
+
     /*parse_eml(&uri);
 
     let eml = EmlParser::from_file(&uri).ignore_body().unwrap().parse().unwrap(); // 
@@ -164,6 +244,11 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     */
     let simple_text = false;
     let body = parse_body(&parsed, simple_text);
+
+    // use different parser for easier headers for score
+    let eml = EmlParser::from_file(&uri).unwrap().ignore_body().parse().unwrap(); 
+    let from_parsed: Option<String> = parse_header_field_value(&eml.from.unwrap_or(HeaderFieldValue::Empty));
+    let score = calculate_risk_score(&iocs, from_parsed, &eml.headers, &header_verification);
     //let body = format!("Subparts: {}. Content: {}", parsed.subparts.len(), parsed.ctype.mimetype);
 
     let mut parsed_eml = ParsedEml::new(body, from, to, subject, iocs);
@@ -172,7 +257,6 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     });
 
     // Template Logic
-    let score = 1;
     let summary: String = render_summary(&parsed_eml, &app_handle);
     let parsed_eml_json = parsed_eml.to_json_with(summary, header_verification, score);
     

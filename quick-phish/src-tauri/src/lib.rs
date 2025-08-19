@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 mod analysis_commands;
 mod store_commands;
 mod indicators;
+mod risk_data;
 mod parsed_eml;
 mod header_verification;
 
