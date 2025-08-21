@@ -1,12 +1,11 @@
 use serde_json::json;
 use tauri::AppHandle; // State
-use tauri_plugin_store::StoreExt; // StoreBuilder, Store, 
+use tauri_plugin_store::StoreExt; // StoreBuilder, Store,
 
 pub const SUMARY_TEMPLATE: &'static str = "summary_template";
 pub const WHITELIST: &'static str = "whitelist";
 pub const BLACKLIST: &'static str = "blacklist";
 pub const STORE_NAME: &'static str = "app_data.json";
-
 
 pub fn get_template(name: &str, app_handle: &AppHandle) -> serde_json::Value {
     let store = app_handle.store("app_data.json");
@@ -22,17 +21,17 @@ pub fn get_template(name: &str, app_handle: &AppHandle) -> serde_json::Value {
 #[tauri::command]
 pub fn get_lists(app_handle: AppHandle) -> serde_json::Value {
     let store = app_handle.store("app_data.json");
-    let default_list =  json!({ "content": "" });
+    let default_list = json!({ "content": "" });
 
     if let Ok(store) = store {
         let whitelist = store.get(WHITELIST).unwrap_or(default_list.clone());
         let blacklist = store.get(BLACKLIST).unwrap_or(default_list.clone());
-        return json!({ 
+        return json!({
             WHITELIST: whitelist,
             BLACKLIST: blacklist
         });
     }
-    return json!({ 
+    return json!({
         WHITELIST: default_list.clone(),
         BLACKLIST: default_list
     });
@@ -53,7 +52,6 @@ pub fn update_list(list: &str, content: &str, app_handle: AppHandle) -> bool {
     return false;
 }
 
-
 #[tauri::command]
 pub fn get_summary_template(app_handle: AppHandle) -> serde_json::Value {
     return get_template(SUMARY_TEMPLATE, &app_handle);
@@ -66,7 +64,7 @@ pub fn update_summary_template(summary: &str, app_handle: AppHandle) -> bool {
 
     if store.is_ok() {
         store.unwrap().set(SUMARY_TEMPLATE, template);
-        return true
+        return true;
     }
     return false;
 }

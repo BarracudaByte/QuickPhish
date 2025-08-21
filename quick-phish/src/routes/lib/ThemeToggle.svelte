@@ -1,5 +1,12 @@
 <script>
+    import { listen } from '@tauri-apps/api/event';
+
     let darkMode = $state(false);
+
+    listen('toggle-theme', (event) => {
+        // console.log(`Dark Theme: ${event.payload}`);
+        toggleMode();
+    });
 
     function toggleMode() {
         if (darkMode) {

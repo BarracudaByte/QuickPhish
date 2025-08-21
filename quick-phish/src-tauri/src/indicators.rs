@@ -2,11 +2,10 @@ use serde::Serialize;
 use serde_json::json;
 use std::collections::HashSet;
 
- 
 #[derive(Serialize)]
 pub struct Indicators {
     pub urls: HashSet<String>,
-    pub emails: HashSet<String>
+    pub emails: HashSet<String>,
 }
 
 impl Indicators {

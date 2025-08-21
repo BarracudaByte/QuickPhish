@@ -32,4 +32,5 @@ minijinja = "2.11.0"
 mailparse = "0.16.1"
 mail-auth = "0.7.1"
 futures = "0.3.31"
+tauri-plugin-log = "2"
 

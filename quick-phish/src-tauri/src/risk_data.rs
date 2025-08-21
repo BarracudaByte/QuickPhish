@@ -1,18 +1,17 @@
 use serde::Serialize;
 use serde_json::json;
 
-
 #[derive(Serialize)]
 pub struct RiskScore {
     pub score: u8,
-    pub reasons: Vec<String>
+    pub reasons: Vec<String>,
 }
 
 impl RiskScore {
     pub fn new() -> Self {
         Self {
             score: 0,
-            reasons: Vec::new()
+            reasons: Vec::new(),
         }
     }
 

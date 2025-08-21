@@ -1,23 +1,22 @@
-use eml_parser::eml::{EmailAddress, HeaderFieldValue, HeaderField};
+use eml_parser::eml::{EmailAddress, HeaderField, HeaderFieldValue};
 use eml_parser::parser::EmlParser;
 use linkify::{LinkFinder, LinkKind};
-use mail_auth::{MessageAuthenticator, AuthenticatedMessage, DkimResult};
+use mail_auth::{AuthenticatedMessage, DkimResult, MessageAuthenticator};
 use mailparse::{MailHeaderMap, ParsedMail};
-use minijinja::{Environment, context};
+use minijinja::{context, Environment};
 use serde_json::json;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::str;
-use tauri::AppHandle;
 use tauri::async_runtime::block_on;
+use tauri::AppHandle;
 
-use crate::indicators::Indicators;
-use crate::risk_data::RiskScore;
 use crate::header_verification::HeaderVerification;
+use crate::indicators::Indicators;
 use crate::parsed_eml::ParsedEml;
+use crate::risk_data::RiskScore;
 use crate::store_commands::{get_template, SUMARY_TEMPLATE};
-
 
 fn parse_header_field_value(header_field: &HeaderFieldValue) -> Option<String> {
     match header_field {
@@ -25,20 +24,27 @@ fn parse_header_field_value(header_field: &HeaderFieldValue) -> Option<String> {
             EmailAddress::AddressOnly { address } => Some(address.clone()),
             EmailAddress::NameAndEmailAddress { name: _, address } => Some(address.clone()),
         },
-        HeaderFieldValue::MultipleEmailAddresses(_email_addresses) => None,    // TODO: Implement this!
+        HeaderFieldValue::MultipleEmailAddresses(_email_addresses) => None, // TODO: Implement this!
         HeaderFieldValue::Unstructured(value) => Some(value.clone()),
         HeaderFieldValue::Empty => None,
     }
 }
 
-fn calculate_risk_score(iocs: &Indicators, from: Option<String>, headers: &Vec<HeaderField>, header_verification: &HeaderVerification) -> RiskScore {
+fn calculate_risk_score(
+    iocs: &Indicators,
+    from: Option<String>,
+    headers: &Vec<HeaderField>,
+    header_verification: &HeaderVerification,
+) -> RiskScore {
     let mut risk_score = RiskScore::new();
     let mut score = 0;
     // if there are URLs in the email increase score
     let num_of_urls = iocs.urls.len();
     if num_of_urls > 0 {
         score += 25;
-        risk_score.reasons.push(format!("Email has {num_of_urls} unique urls"))
+        risk_score
+            .reasons
+            .push(format!("Email has {num_of_urls} unique urls"))
     }
     // TODO: check how many unique URLs
 
@@ -60,33 +66,45 @@ fn calculate_risk_score(iocs: &Indicators, from: Option<String>, headers: &Vec<H
         if let Some(reply_to) = reply_to {
             if reply_to.ends_with(from_fqdn) {
                 score -= 5;
-                risk_score.reasons.push(format!("The reply to domain is the same as the sender (from) domain"));
+                risk_score.reasons.push(format!(
+                    "The reply to domain is the same as the sender (from) domain"
+                ));
             } else {
                 score += 5;
-                risk_score.reasons.push(format!("Different reply to domain than sender domain"));
+                risk_score
+                    .reasons
+                    .push(format!("Different reply to domain than sender domain"));
             }
         }
 
         if let Some(return_path) = return_path {
             if return_path.ends_with(from_fqdn) {
                 score -= 5;
-                risk_score.reasons.push(format!("The return path domain is the same as the sender (from) domain"));
+                risk_score.reasons.push(format!(
+                    "The return path domain is the same as the sender (from) domain"
+                ));
             } else {
                 score += 5;
-                risk_score.reasons.push(format!("Different return path domain than sender domain"));
+                risk_score
+                    .reasons
+                    .push(format!("Different return path domain than sender domain"));
             }
         }
 
         // if the sender domain is in the urls, reduce score
         if iocs.urls.contains(from_fqdn) {
             score -= 5;
-            risk_score.reasons.push(format!("The sender (from) domain is also in the URLs"));
+            risk_score
+                .reasons
+                .push(format!("The sender (from) domain is also in the URLs"));
         }
     }
 
     // DKIM
     if !header_verification.dkim {
-        let dkim_header = headers.iter().find(|&header| header.name == "DKIM-Signature");
+        let dkim_header = headers
+            .iter()
+            .find(|&header| header.name == "DKIM-Signature");
         if dkim_header.is_some() {
             risk_score.reasons.push(format!("Invalid DKIM signature"));
         } else {
@@ -98,10 +116,10 @@ fn calculate_risk_score(iocs: &Indicators, from: Option<String>, headers: &Vec<H
     // ARC
     if !header_verification.arc {
         score += 5;
-        risk_score.reasons.push(format!("Failed ARC chain verification"));
+        risk_score
+            .reasons
+            .push(format!("Failed ARC chain verification"));
     }
-    
-    
 
     // updating the score
     risk_score.score = score;
@@ -131,7 +149,9 @@ fn render_summary(eml: &ParsedEml, app_handle: &AppHandle) -> String {
         let mut env = Environment::new();
         env.add_template(SUMARY_TEMPLATE, template).unwrap();
         let template = env.get_template(SUMARY_TEMPLATE).unwrap();
-        return template.render(context!(eml)).unwrap_or(default_template.to_string())
+        return template
+            .render(context!(eml))
+            .unwrap_or(default_template.to_string());
     }
     return default_template.to_string();
 }
@@ -156,11 +176,10 @@ fn parse_body(eml: &ParsedMail, simple_text: bool) -> String {
     } else {
         let body = match eml.get_body() {
             Ok(b) => b,
-            Err(e) => format!("{:?}", e)
+            Err(e) => format!("{:?}", e),
         };
-        return body
+        return body;
     }
-    
 }
 
 async fn verify_headers(msg: &Vec<u8>) -> HeaderVerification {
@@ -180,11 +199,10 @@ async fn verify_headers(msg: &Vec<u8>) -> HeaderVerification {
     // TODO: add SPF & DMARC
 
     return header_verification;
-}   
-
+}
 
 #[tauri::command]
-pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value { 
+pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     let file = File::open(uri);
     if file.is_err() {
         return json!({"error": "Coudln't open the file."});
@@ -198,19 +216,17 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     if parsed.is_err() {
         return json!({"error": "Coudln't parse the file."});
     }
-    let parsed = parsed.unwrap(); 
-    
+    let parsed = parsed.unwrap();
+
     let contents = fs::read_to_string(&uri);
     if contents.is_err() {
         return json!({"error": "Coudln't open the file 2."});
     }
     let iocs: Indicators = find_iocs(&contents.unwrap(), true);
 
-
-
     /*parse_eml(&uri);
 
-    let eml = EmlParser::from_file(&uri).ignore_body().unwrap().parse().unwrap(); // 
+    let eml = EmlParser::from_file(&uri).ignore_body().unwrap().parse().unwrap(); //
     let from: HeaderFieldValue = eml.from.unwrap_or(HeaderFieldValue::Empty);
     let to: HeaderFieldValue = eml.to.unwrap_or(HeaderFieldValue::Empty);
     let body = eml.body.unwrap_or_default();
@@ -233,9 +249,18 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     */
 
     // TODO: better header parser: https://docs.rs/mailparse/latest/mailparse/fn.addrparse_header.html
-    let subject = parsed.get_headers().get_first_value("Subject").unwrap_or_default();
-    let from = parsed.get_headers().get_first_value("From").unwrap_or_default();
-    let to = parsed.get_headers().get_first_value("To").unwrap_or_default();
+    let subject = parsed
+        .get_headers()
+        .get_first_value("Subject")
+        .unwrap_or_default();
+    let from = parsed
+        .get_headers()
+        .get_first_value("From")
+        .unwrap_or_default();
+    let to = parsed
+        .get_headers()
+        .get_first_value("To")
+        .unwrap_or_default();
     /*let body_maybe = String::from_utf8(parsed.get_body_raw().unwrap());
     let body = match body_maybe {
         Ok(b) => b.to_string(),
@@ -246,19 +271,26 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     let body = parse_body(&parsed, simple_text);
 
     // use different parser for easier headers for score
-    let eml = EmlParser::from_file(&uri).unwrap().ignore_body().parse().unwrap(); 
-    let from_parsed: Option<String> = parse_header_field_value(&eml.from.unwrap_or(HeaderFieldValue::Empty));
+    let eml = EmlParser::from_file(&uri)
+        .unwrap()
+        .ignore_body()
+        .parse()
+        .unwrap();
+    let from_parsed: Option<String> =
+        parse_header_field_value(&eml.from.unwrap_or(HeaderFieldValue::Empty));
     let score = calculate_risk_score(&iocs, from_parsed, &eml.headers, &header_verification);
     //let body = format!("Subparts: {}. Content: {}", parsed.subparts.len(), parsed.ctype.mimetype);
 
     let mut parsed_eml = ParsedEml::new(body, from, to, subject, iocs);
     parsed.headers.iter().for_each(|header| {
-        parsed_eml.headers.insert(header.get_key(), header.get_value());
+        parsed_eml
+            .headers
+            .insert(header.get_key(), header.get_value());
     });
 
     // Template Logic
     let summary: String = render_summary(&parsed_eml, &app_handle);
     let parsed_eml_json = parsed_eml.to_json_with(summary, header_verification, score);
-    
+
     return parsed_eml_json;
 }

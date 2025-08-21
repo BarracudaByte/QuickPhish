@@ -6,7 +6,7 @@ pub struct HeaderVerification {
     pub dkim: bool,
     pub spf: bool,
     pub arc: bool,
-    pub dmarc: bool
+    pub dmarc: bool,
 }
 
 impl HeaderVerification {
@@ -15,7 +15,7 @@ impl HeaderVerification {
             dkim: false,
             spf: false,
             arc: false,
-            dmarc: false
+            dmarc: false,
         }
     }
     pub fn to_json(&self) -> serde_json::Value {
