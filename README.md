@@ -11,11 +11,11 @@ QuickPhish is a small application to quickly analyse phishing emails. The app is
 - Generates custom case notes (just copy & paste 🤓)
 - Customizable 
     - White- & Blacklist 
+    ![app screenshot](resources/app_screenshot_lists_01.png)
     - Custom Jinja Note Template
+    ![app screenshot](resources/app_screenshot_templates_01.png)
     - Light & Dark Theme
 - User-friendly interface
-
-![app screenshot](resources/app_screenshot_03.png)
 
 ## How it Works
 

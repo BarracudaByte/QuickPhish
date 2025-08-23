@@ -1,9 +1,10 @@
 //use tauri::ipc::Response;
 use std::sync::{Arc, Mutex};
-use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
+use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder, PredefinedMenuItem};
 use tauri::{Emitter, Manager};
-use tauri_plugin_store::StoreExt;
 use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_store::StoreExt;
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 mod analysis_commands;
 mod header_verification;
@@ -22,6 +23,31 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // Shortcuts
+            #[cfg(desktop)]
+            {
+
+                let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::META), Code::KeyV);
+                app.handle().plugin(
+                    tauri_plugin_global_shortcut::Builder::new().with_handler(move |_app, shortcut, event| {
+                        println!("Shortcut {:?}", shortcut);
+                        if shortcut == &ctrl_n_shortcut {
+                            match event.state() {
+                              ShortcutState::Pressed => {
+                                println!("Ctrl-V Pressed!");
+                              }
+                              ShortcutState::Released => {
+                                println!("Ctrl-V Released!");
+                              }
+                            }
+                        }
+                    })
+                    .build(),
+                )?;
+
+                app.global_shortcut().register(ctrl_n_shortcut)?;
+            }
+
             // Create the store instance
             let store = app.store("app_data.json")?;
 
@@ -32,9 +58,9 @@ pub fn run() {
             app.manage(shared_store);
 
             // Window Menu
-           /*let check_dark_theme = CheckMenuItemBuilder::with_id("dark_theme", "Dark Theme")
-                .checked(false)
-                .build(app)?;*/
+            /*let check_dark_theme = CheckMenuItemBuilder::with_id("dark_theme", "Dark Theme")
+            .checked(false)
+            .build(app)?;*/
 
             let app_menu = SubmenuBuilder::new(app, "App")
                 //.item(&check_dark_theme)
@@ -43,13 +69,17 @@ pub fn run() {
                 .text("quit", "Quit")
                 .build()?;
 
-
             let file_menu = SubmenuBuilder::new(app, "File")
                 .text("open", "Open")
                 .build()?;
 
+            let edit_menu = SubmenuBuilder::new(app, "Edit")
+                .copy()
+                .paste()
+                .build()?;
+
             let menu = MenuBuilder::new(app)
-                .items(&[&app_menu, &file_menu])
+                .items(&[&app_menu, &file_menu, &edit_menu])
                 .build()?;
 
             app.set_menu(menu)?;

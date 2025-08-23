@@ -1,6 +1,9 @@
 <script>
 // @ts-nocheck
     import { invoke } from '@tauri-apps/api/core';
+    import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
+    import { context } from "../shared.svelte";
+    import JsonViewer from '../lib/JsonViewer.svelte';
 
     let summary = $state("");
     let loading = $state(false);
@@ -25,6 +28,7 @@
     }
 
 
+
 </script>
 
 <div class="m-2 h-dvh">
@@ -43,7 +47,14 @@
             <button onclick={updateSummaryTemplate} class="rounded bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 cursor-pointer">Update</button>
         {/if}
     </div>
-
+    <h2 class="mt-4">Data Structure</h2>
+    {#if context.eml.subject || context.eml.body }
+        <div class="flex min-h-[80px] max-h-[240px] w-full overflow-auto px-3 py-2 text-sm border rounded-md border-slate-200 dark:border-slate-700 ">
+            <JsonViewer data={context}/>
+        </div>
+    {:else}
+        <p>Open an eml in the analysis tab to see its structure here.</p>
+    {/if}
 
     
 </div>

@@ -3,13 +3,14 @@
     import FileAnalysis from "../analysis/FileAnalysis.svelte";
     import FileList from "../analysis/FileList.svelte";
     import FileUpload from "../analysis/FileUpload.svelte";
+    import { context } from "../shared.svelte";
     import { onMount, tick } from 'svelte';
     import { open } from '@tauri-apps/plugin-dialog';
     import { invoke } from '@tauri-apps/api/core';
     import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
     import DOMPurify from 'dompurify';
 
-    let eml = $state({});
+    //let eml = $state({});
     let loading = $state(false);
     let copiedSummary = $state(false);
     let emlContainer;
@@ -24,14 +25,14 @@
         invoke('load_eml', { uri: file }).then((data) => {
             var sanitized = DOMPurify.sanitize(data.body);
             data.body = updateLinks(sanitized);
-            eml = data;
+            context.eml = data;
             loading = false;
         });
     }
 
     async function copySummary() {
-        if (eml.summary) {
-            await writeText(eml.summary);
+        if (context.eml.summary) {
+            await writeText(context.eml.summary);
             copiedSummary = true;
         }
     }
@@ -56,9 +57,9 @@
 
     $effect(() => {
         console.log(`Effect function! ${loading}`);
-        if (emlContainer && eml && eml.body) {
+        if (emlContainer && context.eml && context.eml.body) {
             console.log("Inside the effect");
-            emlContainer.innerHTML = eml.body;
+            emlContainer.innerHTML = context.eml.body;
 
             const links = emlContainer.querySelectorAll('a');
             links.forEach(link => {
@@ -96,20 +97,20 @@
 
 
 <div class="p-2 h-dvh">
-    {#if eml.subject || eml.body }
+    {#if context.eml.subject || context.eml.body }
         <h1>Analysis Results</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
             <!-- Risk Score -->
             <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 pb-2">
                 <div class="flex">
-                    <h2 class="">Risk Score: {eml.riskScore.score}</h2>
+                    <h2 class="">Risk Score: {context.eml.riskScore.score}</h2>
                     <span class="relative flex size-3 mt-3 ms-2">
-                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full {eml.score == 0 ? 'bg-lime-400' : (eml.score == 1 ? 'bg-amber-400' : 'bg-rose-400')} opacity-75"></span>
-                        <span class="relative inline-flex size-3 rounded-full {eml.score == 0 ? 'bg-lime-500' : (eml.score == 1 ? 'bg-amber-500' : 'bg-rose-500')}"></span>
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full {context.eml.score == 0 ? 'bg-lime-400' : (context.eml.score == 1 ? 'bg-amber-400' : 'bg-rose-400')} opacity-75"></span>
+                        <span class="relative inline-flex size-3 rounded-full {context.eml.score == 0 ? 'bg-lime-500' : (context.eml.score == 1 ? 'bg-amber-500' : 'bg-rose-500')}"></span>
                     </span>
                 </div>
                 <ul class="text-sm list-disc ms-4">
-                    {#each eml.riskScore.reasons as reason }
+                    {#each context.eml.riskScore.reasons as reason }
                         <li>{reason}</li>
                     {/each }
                 </ul>
@@ -119,8 +120,7 @@
             <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 pb-2 col-span-1 xl:col-span-2">
                 <h2 class="grow">Summary</h2>
                 <div class="border rounded-lg border-zinc-200 dark:border-zinc-700 p-2 my-2 font-mono font-light text-sm">
-                    {eml.summary}
-                    <!--<p>The email was sent from {eml.from} to {eml.to} with subject '{eml.subject}'</p>-->
+                    {context.eml.summary}
                 </div>
                 <div class="flex flex-row-reverse mb-2">
                     <button onclick={copySummary} class="border rounded flex gap-1 px-2 pt-1 mt-1 cursor-pointer text-xs hover:ring-1 {copiedSummary ? 'text-lime-500 border-lime-500  ring-emerald-500' : 'text-zinc-700 dark:text-zinc-300 border-zinc-500 ring-blue-500' }">
@@ -150,8 +150,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700 overflow-y-auto rounded-b-lg">
-                        {#if eml.headers }
-                            {#each Object.entries(eml.headers) as [k, v]}
+                        {#if context.eml.headers }
+                            {#each Object.entries(context.eml.headers) as [k, v]}
                                 <tr class="odd:bg-gray-100/50 odd:dark:bg-gray-800/50 hover:odd:bg-slate-100/75 hover:odd:dark:bg-slate-800/75 even:bg-gray-100/25 even:dark:bg-gray-800/25 hover:even:bg-gray-50/25 hover:even:dark:bg-gray-700/25">
                                     <td class="px-3 py-2 text-sm font-normal max-w-sm whitespace-nowrap overflow-x-auto">{k}</td>
                                     <td class="px-3 py-2 text-sm font-extralight whitespace-nowrap max-w-[50%] overflow-x-auto">{v}</td>
@@ -166,18 +166,18 @@
         <h2>Email &amp; Indicators</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 ">
             <div bind:this={emlContainer} class="col-span-1 xl:col-span-2 border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 font-light text-sm max-h-80 overflow-auto">
-                <!--{@html eml.body}-->
+                <!--{@html context.eml.body}-->
             </div>
             <div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 max-h-80 overflow-auto">
                 <h3>URLs</h3>
                 <ul>
-                    {#each eml.indicators.urls as url}
+                    {#each context.eml.indicators.urls as url}
                     <li>{url}</li>
                     {/each}
                 </ul>
                 <h3>Emails</h3>
                 <ul>
-                    {#each eml.indicators.emails as email}
+                    {#each context.eml.indicators.emails as email}
                     <li>{email}</li>
                     {/each}
                 </ul>
@@ -186,8 +186,8 @@
         <!-- TODO: Make this Floating -->
         <button onclick={openFile} class="text-blue-500 hover:text-blue-600 cursor-pointer">Open .eml</button>
         <!--<div>{eml.body}</div>-->
-    {:else if eml.error}
-        <p>Error: {eml.error}</p>
+    {:else if context.eml.error}
+        <p>Error: {context.eml.error}</p>
     {:else }
         <!-- No Analysis Yet -->
          <div class="flex flex-col justify-center items-center h-full gap-2 ">
