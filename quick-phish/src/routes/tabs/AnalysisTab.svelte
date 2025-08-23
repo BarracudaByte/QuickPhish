@@ -190,7 +190,7 @@
         <p>Error: {eml.error}</p>
     {:else }
         <!-- No Analysis Yet -->
-         <div class="flex flex-col justify-center items-center h-dvh gap-2 ">
+         <div class="flex flex-col justify-center items-center h-full gap-2 ">
             <button onclick={openFile} class="mx-auto rounded bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 cursor-pointer">Open .eml</button>
             <p class="text-center text-sm text-zinc-500">Open a Email to start the analysis.</p>
         </div>

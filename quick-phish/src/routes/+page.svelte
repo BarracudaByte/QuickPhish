@@ -19,9 +19,9 @@
     }
 </script>
 
-<div class="flex bg-zinc-50 dark:bg-zinc-900 text-black dark:text-white">
-  <Sidebar />
-  <div class="w-full h-full overflow-scroll xl:px-8">
+<Sidebar />
+<div class="flex bg-zinc-50 ml-48 dark:bg-zinc-900 text-black dark:text-white overflow-auto">
+  <div class="w-full h-full xl:px-8">
     {#if nav.tab == 0 }
       <AnalysisTab />
     {:else if nav.tab == 1 }

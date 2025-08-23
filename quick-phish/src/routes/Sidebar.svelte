@@ -7,7 +7,7 @@
     const tabs = ['Analysis', 'Templates', 'Lists', 'Settings'];
 </script>
 
-<div class="flex flex-col gap-2 p-2 font-light text-sm bg-white dark:bg-zinc-900 text-black dark:text-white h-screen min-w-48 border-zinc-300 dark:border-black border-r">
+<div class="fixed top-0 left-0 z-30 h-full overflow-x-hidden flex flex-col gap-2 p-2 font-light text-sm bg-white dark:bg-zinc-900 text-black dark:text-white h-screen min-w-48 border-zinc-300 dark:border-black border-r">
     {#each tabs as tab, i}
         <button onclick={() => nav.tab = i} > <!--bg-zinc-100 dark:bg-zinc-800-->
             <!--<div class="{nav.tab == i ? 'bg-blue-500 dark:bg-blue-500 text-white' : ''} text-left items-center flex gap-1 p-1 rounded hover:text-blue-500 cursor-pointer ">-->

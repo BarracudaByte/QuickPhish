@@ -50,7 +50,7 @@
 
 </script>
 
-<div class="m-2">
+<div class="m-2 h-dvh">
     <h1>Lists</h1>
     <p>Black- and Whitelists to always block or allow specific IOCs. Add each value in a new line.</p>
     <h2 class="mt-4">Whitelist</h2>

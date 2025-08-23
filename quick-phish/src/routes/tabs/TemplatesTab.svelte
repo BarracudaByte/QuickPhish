@@ -27,7 +27,7 @@
 
 </script>
 
-<div class="m-2">
+<div class="m-2 h-dvh">
     <h1>Templates</h1>
     <p>Update the default templates to automatically generate case notes the way you need them. All templates support the Jinja syntax.</p>
     <h2 class="mt-4">Email Summary</h2>

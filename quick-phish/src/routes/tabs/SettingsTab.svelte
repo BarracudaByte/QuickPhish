@@ -5,7 +5,7 @@
 
 </script>
 
-<div class="m-2">
+<div class="m-2 h-dvh">
     <h1>Settings</h1>
     <p>...</p>
 
