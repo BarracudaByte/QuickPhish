@@ -41,6 +41,10 @@ Not yet, right now this is still in very early development. Once I have the firs
 
 If you have any thoughts on how this tool could be improved or just generally would like to see a specific feature, please open a GitHub issue. I will review them and see what I can make! 👍
 
+### When will the frist version be released?
+
+I'm currently working on this on the side, so mostly weekend work, which means development is not as fast as I want, but I'm aiming of have the first release by the end of this year (2025).
+
 ### I have more questions!
 
 Anything not mentioned here, feel free to reach out to me directly or visit my website [https://barracudabyte.de](https://barracudabyte.de).
