@@ -98,7 +98,10 @@
 
 <div class="p-2 h-dvh">
     {#if context.eml.subject || context.eml.body }
-        <h1>Analysis Results</h1>
+        <div class="flex">
+            <h1 class="grow">Analysis Results</h1>
+            <button onclick={openFile} class="mx-auto rounded bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 cursor-pointer">Open New .eml</button>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
             <!-- Risk Score -->
             <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 pb-2">
@@ -183,8 +186,6 @@
                 </ul>
             </div>
         </div>
-        <!-- TODO: Make this Floating -->
-        <button onclick={openFile} class="text-blue-500 hover:text-blue-600 cursor-pointer">Open .eml</button>
         <!--<div>{eml.body}</div>-->
     {:else if context.eml.error}
         <p>Error: {context.eml.error}</p>
