@@ -8,7 +8,13 @@
     import { open } from '@tauri-apps/plugin-dialog';
     import { invoke } from '@tauri-apps/api/core';
     import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
+    import { listen } from '@tauri-apps/api/event';
     import DOMPurify from 'dompurify';
+
+
+    listen('open-file', () => {
+        openFile();
+    });
 
     //let eml = $state({});
     let loading = $state(false);
@@ -172,6 +178,12 @@
                 <!--{@html context.eml.body}-->
             </div>
             <div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 max-h-80 overflow-auto">
+                <h3>Domains</h3>
+                <ul>
+                    {#each context.eml.indicators.domains as domain}
+                    <li>{domain}</li>
+                    {/each}
+                </ul>
                 <h3>URLs</h3>
                 <ul>
                     {#each context.eml.indicators.urls as url}

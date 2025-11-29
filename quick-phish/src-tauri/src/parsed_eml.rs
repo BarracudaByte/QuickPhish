@@ -13,7 +13,7 @@ pub struct ParsedEml {
     pub from: String,
     pub to: String,
     pub subject: String,
-    pub iocs: Indicators,
+    pub indicators: Indicators,
 }
 
 impl ParsedEml {
@@ -30,12 +30,12 @@ impl ParsedEml {
             from: from,
             to: to,
             subject: subject,
-            iocs: indicators,
+            indicators: indicators,
         }
     }
 
     pub fn to_json(&self) -> serde_json::Value {
-        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json() })
+        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.indicators.to_json() })
     }
 
     pub fn to_json_with(
@@ -44,6 +44,6 @@ impl ParsedEml {
         header_verification: HeaderVerification,
         score: RiskScore,
     ) -> serde_json::Value {
-        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.iocs.to_json(), "summary": summary, "headerVerify": header_verification.to_json(), "riskScore": score.to_json() })
+        json!({ "headers": self.headers, "body": self.body, "from": self.from, "to": self.to, "subject": self.subject, "indicators": self.indicators.to_json(), "summary": summary, "headerVerify": header_verification.to_json(), "riskScore": score.to_json() })
     }
 }

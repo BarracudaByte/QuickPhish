@@ -1,8 +1,9 @@
+use minijinja::{context, Environment};
 use serde_json::json;
 use tauri::AppHandle; // State
 use tauri_plugin_store::StoreExt; // StoreBuilder, Store,
 
-pub const SUMARY_TEMPLATE: &'static str = "summary_template";
+pub const SUMMARY_TEMPLATE: &'static str = "summary_template";
 pub const WHITELIST: &'static str = "whitelist";
 pub const BLACKLIST: &'static str = "blacklist";
 pub const STORE_NAME: &'static str = "app_data.json";
@@ -54,16 +55,22 @@ pub fn update_list(list: &str, content: &str, app_handle: AppHandle) -> bool {
 
 #[tauri::command]
 pub fn get_summary_template(app_handle: AppHandle) -> serde_json::Value {
-    return get_template(SUMARY_TEMPLATE, &app_handle);
+    return get_template(SUMMARY_TEMPLATE, &app_handle);
 }
 
 #[tauri::command]
 pub fn update_summary_template(summary: &str, app_handle: AppHandle) -> bool {
+    let mut env = Environment::new();
+    let valid_template = env.add_template(SUMMARY_TEMPLATE, summary);
+    if valid_template.is_err() {
+        return false;
+    }
+
     let store = app_handle.store(STORE_NAME);
     let template = json!({ "template": summary.to_string() });
 
     if store.is_ok() {
-        store.unwrap().set(SUMARY_TEMPLATE, template);
+        store.unwrap().set(SUMMARY_TEMPLATE, template);
         return true;
     }
     return false;

@@ -11,12 +11,13 @@ use std::io::Read;
 use std::str;
 use tauri::async_runtime::block_on;
 use tauri::AppHandle;
+use url::{Url};
 
 use crate::header_verification::HeaderVerification;
 use crate::indicators::Indicators;
 use crate::parsed_eml::ParsedEml;
 use crate::risk_data::RiskScore;
-use crate::store_commands::{get_template, SUMARY_TEMPLATE};
+use crate::store_commands::{get_template, SUMMARY_TEMPLATE};
 
 fn parse_header_field_value(header_field: &HeaderFieldValue) -> Option<String> {
     match header_field {
@@ -132,7 +133,13 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
     finder.url_must_have_scheme(with_scheme);
     finder.links(text).for_each(|link| {
         if *link.kind() == LinkKind::Url {
-            indicators.urls.insert(link.as_str().to_string());
+            let link_str: &str = link.as_str();
+            indicators.urls.insert(link_str.to_string());
+            if let Ok(url) = Url::parse(link_str) {
+                if let Some(domain) = url.host_str() {
+                    indicators.domains.insert(domain.to_string());
+                }
+            }
         } else if *link.kind() == LinkKind::Email {
             indicators.emails.insert(link.as_str().to_string());
         }
@@ -141,17 +148,27 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
 }
 
 fn render_summary(eml: &ParsedEml, app_handle: &AppHandle) -> String {
-    let default_template: &str = "This is the default tempalte";
-    let binding = get_template(SUMARY_TEMPLATE, app_handle);
+    let default_template: &str = "This is the default template";
+    let binding = get_template(SUMMARY_TEMPLATE, app_handle);
     let template: Option<&serde_json::Value> = binding.get("template");
     if template.is_some() {
         let template: &str = template.unwrap().as_str().unwrap_or(default_template);
         let mut env = Environment::new();
-        env.add_template(SUMARY_TEMPLATE, template).unwrap();
-        let template = env.get_template(SUMARY_TEMPLATE).unwrap();
-        return template
-            .render(context!(eml))
-            .unwrap_or(default_template.to_string());
+        let valid_template = env.add_template(SUMMARY_TEMPLATE, template);
+        if valid_template.is_ok() {
+            let template = env.get_template(SUMMARY_TEMPLATE).unwrap();
+            let rendered_template = template.render(context!(eml));
+            if rendered_template.is_ok() {
+                return rendered_template.unwrap();
+            } else {
+                return rendered_template.unwrap_err().to_string();
+            }
+            /*return template
+                .render(context!(eml))
+                .unwrap_or(default_template.to_string());*/
+        } else {
+            return format!("Invalid Template!");
+        }
     }
     return default_template.to_string();
 }

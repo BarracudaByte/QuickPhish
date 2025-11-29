@@ -54,3 +54,7 @@ Anything not mentioned here, feel free to reach out to me directly or visit my w
 - Frontend with [TailwindCSS](https://tailwindcss.com)
 - Icons from [HeroIcons](https://heroicons.com/outline)
 - Backend with Rust & [Tauri](https://tauri.app/)
+
+## Jinja
+
+Available filter functions for the Jinja template can be viewed here: [https://docs.rs/minijinja/latest/minijinja/filters/index.html#functions](https://docs.rs/minijinja/latest/minijinja/filters/index.html#functions)

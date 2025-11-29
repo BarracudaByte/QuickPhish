@@ -26,10 +26,10 @@ pub fn run() {
             // Shortcuts
             #[cfg(desktop)]
             {
-
                 let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::META), Code::KeyV);
+                let ctrl_o_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::META), Code::KeyO);
                 app.handle().plugin(
-                    tauri_plugin_global_shortcut::Builder::new().with_handler(move |_app, shortcut, event| {
+                    tauri_plugin_global_shortcut::Builder::new().with_handler(move |app_handle, shortcut, event| {
                         println!("Shortcut {:?}", shortcut);
                         if shortcut == &ctrl_n_shortcut {
                             match event.state() {
@@ -40,12 +40,21 @@ pub fn run() {
                                 println!("Ctrl-V Released!");
                               }
                             }
+                        } else if shortcut == &ctrl_o_shortcut {
+                            match event.state() {
+                                ShortcutState::Pressed => {
+                                    // only show on release
+                                }
+                                ShortcutState::Released => {
+                                    app_handle.emit("open-file", {}).unwrap();
+                                }
+                            }
                         }
                     })
                     .build(),
                 )?;
 
-                app.global_shortcut().register(ctrl_n_shortcut)?;
+                app.global_shortcut().register(ctrl_o_shortcut)?;
             }
 
             // Create the store instance
@@ -97,7 +106,7 @@ pub fn run() {
                         app_handle.exit(0);
                     }
                     "open" => {
-                        println!("Show dialog to open eml");
+                        app_handle.emit("open-file", {}).unwrap();
                     }
                     _ => {
                         println!("unexpected menu event");
