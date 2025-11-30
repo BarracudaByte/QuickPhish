@@ -20,7 +20,7 @@
 </script>
 
 <Sidebar />
-<div class="flex bg-zinc-50 ml-48 dark:bg-zinc-900 text-black dark:text-white overflow-auto">
+<div class="flex bg-zinc-50 {nav.expanded ? 'ml-48' : 'ml-12'} dark:bg-zinc-900 text-black dark:text-white overflow-auto">
   <div class="w-full h-full xl:px-8">
     {#if nav.tab == 0 }
       <AnalysisTab />

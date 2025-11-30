@@ -18,12 +18,13 @@
 
     //let eml = $state({});
     let loading = $state(false);
+    let file = $state("");
     let copiedSummary = $state(false);
     let emlContainer;
 
     async function openFile() {
         loading = true;
-        const file = await open({
+        file = await open({
             multiple: false,
             directory: false,
         });
@@ -33,6 +34,12 @@
             data.body = updateLinks(sanitized);
             context.eml = data;
             loading = false;
+        });
+    }
+
+    async function reloadAnalysis() {
+        invoke('render_summary', { uri: file }).then((data) => {
+            // TODO
         });
     }
 
@@ -105,7 +112,7 @@
 <div class="p-2 h-dvh">
     {#if context.eml.subject || context.eml.body }
         <div class="flex">
-            <h1 class="grow">Analysis Results</h1>
+            <h1 class="grow">Analysis Results</h1><!--{ JSON.stringify(file) }-->
             <button onclick={openFile} class="mx-auto rounded bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 cursor-pointer">Open New .eml</button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
@@ -127,7 +134,15 @@
 
             <!-- Summary -->
             <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 pb-2 col-span-1 xl:col-span-2">
-                <h2 class="grow">Summary</h2>
+                <div class="flex">
+                    <h2 class="grow">Summary</h2>
+                    <!--<button aria-label="refresh" onclick={reloadAnalysis} class="p-2 text-black dark:text-white cursor-pointer hover:text-blue-600 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>-->
+
+                </div>
                 <div class="border rounded-lg border-zinc-200 dark:border-zinc-700 p-2 my-2 font-mono font-light text-sm">
                     {context.eml.summary}
                 </div>

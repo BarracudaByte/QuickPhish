@@ -1,5 +1,6 @@
 export const nav = $state({
-	tab: 0
+	tab: 0,
+	expanded: true
 });
 
 export const context = $state({
