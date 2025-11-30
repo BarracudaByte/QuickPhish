@@ -20,6 +20,8 @@
     let loading = $state(false);
     let file = $state("");
     let copiedSummary = $state(false);
+    let emailState = $state("Rendered");
+    let showEmailViewOptions = $state(false);
     let emlContainer;
 
     async function openFile() {
@@ -66,6 +68,11 @@
             });*/
         });
         return doc.body.innerHTML;
+    }
+
+    function updateEmailView(view) {
+        emailState = view;
+        showEmailViewOptions = false;
     }
 
     $effect(() => {
@@ -166,17 +173,17 @@
         <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 py-2 mt-4">
             <h2>Headers</h2>
             <div class="rounded-lg relative overflow-y-auto max-h-80 pb-1">
-                <table class="table-fixed w-full border-collapse border rounded-lg border-slate-200 dark:border-slate-700">
-                    <thead class="sticky top-0 z-10 bg-slate-200 dark:bg-slate-700 rounded-t-lg">
+                <table class="table-fixed w-full border-collapse  rounded-lg border-slate-200 dark:border-slate-700"><!--border-->
+                    <thead class="sticky top-0 z-10 bg-zinc-200 dark:bg-zinc-700 rounded-t-lg">
                         <tr class="">
-                            <th class="px-5 py-3 text-xs font-medium text-left uppercase">Header</th>
-                            <th class="px-5 py-3 text-xs font-medium text-left uppercase">Value</th>
+                            <th class="px-5 py-3 text-xs font-bold text-left uppercase">Key</th>
+                            <th class="px-5 py-3 text-xs font-bold text-left uppercase">Value</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700 overflow-y-auto rounded-b-lg">
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700 overflow-y-auto rounded-b-lg">
                         {#if context.eml.headers }
                             {#each Object.entries(context.eml.headers) as [k, v]}
-                                <tr class="odd:bg-gray-100/50 odd:dark:bg-gray-800/50 hover:odd:bg-slate-100/75 hover:odd:dark:bg-slate-800/75 even:bg-gray-100/25 even:dark:bg-gray-800/25 hover:even:bg-gray-50/25 hover:even:dark:bg-gray-700/25">
+                                <tr class="hover:bg-zinc-50 hover:dark:bg-zinc-700/25"><!-- odd:bg-gray-100/50 odd:dark:bg-gray-800/50 hover:odd:bg-slate-100/75 hover:odd:dark:bg-slate-800/75 even:bg-gray-100/25 even:dark:bg-gray-800/25 hover:even:bg-gray-50/25 hover:even:dark:bg-gray-700/25 -->
                                     <td class="px-3 py-2 text-sm font-normal max-w-sm whitespace-nowrap overflow-x-auto">{k}</td>
                                     <td class="px-3 py-2 text-sm font-extralight whitespace-nowrap max-w-[50%] overflow-x-auto">{v}</td>
                                 </tr>
@@ -187,32 +194,66 @@
             </div>
         </div>
 
-        <h2>Email &amp; Indicators</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 ">
-            <div bind:this={emlContainer} class="col-span-1 xl:col-span-2 border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 font-light text-sm max-h-80 overflow-auto">
-                <!--{@html context.eml.body}-->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-96 mb-8">
+            <!-- Email -->
+            <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 py-2 mt-4 col-span-1 xl:col-span-2 ">
+                <div class="flex">
+                    <h2 class="grow">Email</h2>
+                    <div class="relative">
+                        <button onclick={ showEmailViewOptions = !showEmailViewOptions} class="relative px-2 py-1 border rounded border-slate-200 dark:border-slate-700 font-light min-w-32">
+                            <span class="flex items-center gap-1">
+                                <p class="grow text-left">{ emailState } </p>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="ionicon w-4 h-4" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24" d="M112 184l144 144 144-144"/></svg>
+                            </span>
+                        </button>
+                        {#if showEmailViewOptions }
+                        <div class="absolute top-0 left-0 mt-8 px-2 py-1 bg-white dark:bg-zinc-900 flex flex-col p-1 gap-1 justify-start text-left border rounded border-slate-200 dark:border-slate-700 divide-y divide-slate-200 min-w-32">
+                            <button onclick={ () => updateEmailView('Rendered') } class="hover:bg-zinc-50 hover:dark:bg-zinc-800 cursor-pointer">Rendered</button>
+                            <button onclick={ () => updateEmailView('Plaintext') } class="hover:bg-zinc-50 hover:dark:bg-zinc-800 cursor-pointer">Plaintext</button>
+                            <button onclick={ () => updateEmailView('HTML') } class="hover:bg-zinc-50 hover:dark:bg-zinc-800 cursor-pointer">HTML</button>
+                        </div>
+                        {/if}
+                    </div>
+
+
+                </div>
+                <div bind:this={emlContainer} class="border rounded border-slate-200 dark:border-slate-700 my-2 font-light text-sm max-h-80 overflow-auto">
+                    <!--{@html context.eml.body}-->
+                </div>
             </div>
-            <div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 max-h-80 overflow-auto">
-                <h3>Domains</h3>
-                <ul>
-                    {#each context.eml.indicators.domains as domain}
-                    <li>{domain}</li>
-                    {/each}
-                </ul>
-                <h3>URLs</h3>
-                <ul>
-                    {#each context.eml.indicators.urls as url}
-                    <li>{url}</li>
-                    {/each}
-                </ul>
-                <h3>Emails</h3>
-                <ul>
-                    {#each context.eml.indicators.emails as email}
-                    <li>{email}</li>
-                    {/each}
-                </ul>
+
+            <!-- Indicators-->
+            <div class="rounded bg-white dark:bg-zinc-800 shadow-sm px-3 py-2 mt-4">
+                <div class="flex">
+                    <h2 class="grow">Indicators</h2>
+                    
+                </div>
+                <div class="border rounded border-slate-200 dark:border-slate-700 my-2 font-light text-sm max-h-80 overflow-auto p-2">
+                    <h3>Domains</h3>
+                    <ul>
+                        {#each context.eml.indicators.domains as domain}
+                        <li>{domain}</li>
+                        {/each}
+                    </ul>
+                    <h3>URLs</h3>
+                    <ul>
+                        {#each context.eml.indicators.urls as url}
+                        <li>{url}</li>
+                        {/each}
+                    </ul>
+                    <h3>Emails</h3>
+                    <ul>
+                        {#each context.eml.indicators.emails as email}
+                        <li>{email}</li>
+                        {/each}
+                    </ul>
+                </div>
             </div>
+            <!--<div class="border rounded-lg border-slate-200 dark:border-slate-700 p-2 my-2 max-h-80 overflow-auto">-->
+                
+            
         </div>
+        <div class="h-2"></div>
         <!--<div>{eml.body}</div>-->
     {:else if context.eml.error}
         <p>Error: {context.eml.error}</p>

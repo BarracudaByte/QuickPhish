@@ -137,7 +137,9 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
             indicators.urls.insert(link_str.to_string());
             if let Ok(url) = Url::parse(link_str) {
                 if let Some(domain) = url.host_str() {
-                    indicators.domains.insert(domain.to_string());
+                    if domain.contains(".") {
+                        indicators.domains.insert(domain.to_string());
+                    }
                 }
             }
         } else if *link.kind() == LinkKind::Email {

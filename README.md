@@ -19,13 +19,17 @@ QuickPhish is a small application to quickly analyse phishing emails. The app is
 
 ## How it Works
 
-Open a `.eml` file in **QuickPhish** and it will parse the email for you. It will write a quick summary for your case notes (using Jinja templates you can adjust yourself) and it will show you detailed information about the email, including:
+Open a `.eml` file in **QuickPhish** and it will parse the email for you. It will write a quick summary for your case notes (using Jinja templates you can adjust yourself) and it will show you detailed information about the email.
 
+![app screenshot](resources/app_screenshot_04.png)
+
+The information displayed, includes:
 - all headers extracted and displayed in table format
 - all URLs and email addresses found in the email
-- render of the email
+- render of the email, with the option to view it rendered or in plaintext
 
 ![app screenshot](resources/app_screenshot_01.png)
+
 
 ## FAQ
 
@@ -44,6 +48,10 @@ If you have any thoughts on how this tool could be improved or just generally wo
 ### When will the frist version be released?
 
 I'm currently working on this on the side, so mostly weekend work, which means development is not as fast as I want, but I'm aiming of have the first release by the end of this year (2025).
+
+### Is there any documentation on how to use this tool?
+
+Not yet, but there will be a detailed guide describing each of the features when the first version will be released.
 
 ### I have more questions!
 
