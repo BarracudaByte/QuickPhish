@@ -228,7 +228,7 @@
                     <h2 class="grow">Indicators</h2>
                     
                 </div>
-                <div class="border rounded border-zinc-200 dark:border-zinc-700 my-2 font-light text-sm max-h-80 overflow-auto p-2">
+                <div class="border rounded border-zinc-200 dark:border-zinc-700 my-2 font-light text-sm max-h-80 overflow-auto whitespace-nowrap p-2">
                     <h3>Domains</h3>
                     <ul>
                         {#each context.eml.indicators.domains as domain}

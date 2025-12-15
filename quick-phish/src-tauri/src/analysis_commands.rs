@@ -192,16 +192,22 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
     finder.links(text).for_each(|link| {
         if *link.kind() == LinkKind::Url {
             let link_str: &str = link.as_str();
-            indicators.urls.insert(link_str.to_string());
-            if let Ok(url) = Url::parse(link_str) {
-                if let Some(domain) = url.host_str() {
-                    if domain.contains(".") {
-                        indicators.domains.insert(domain.to_string());
+            let dot_count = link_str.matches(".").count();
+            if dot_count > 0 && !(dot_count == 1 && link_str.contains("wwww.")) {
+                indicators.urls.insert(link_str.to_string());
+                if let Ok(url) = Url::parse(link_str) {
+                    if let Some(domain) = url.host_str() {
+                        if domain.contains(".") {
+                            indicators.domains.insert(domain.to_string());
+                        }
                     }
                 }
             }
         } else if *link.kind() == LinkKind::Email {
-            indicators.emails.insert(link.as_str().to_string());
+            let link_str = link.as_str();
+            if !link_str.starts_with("header.i=@") && !link_str.starts_with("smtp.mailfrom=") {
+                indicators.emails.insert(link_str.to_string());
+            }
         }
     });
     return indicators;
