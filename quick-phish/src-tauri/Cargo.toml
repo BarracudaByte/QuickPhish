@@ -1,8 +1,8 @@
 [package]
 name = "quick-phish"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Analyse Phishing emails quickly and efficiently."
+authors = ["BarracudaByte"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -25,12 +25,12 @@ serde_json = "1"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
-eml-parser = "0.1.4"
+eml-parser = "=0.1.4"
 tauri-plugin-store = "2"
 linkify = "0.10.0"
 minijinja = "2.11.0"
 mailparse = "0.16.1"
-mail-auth = "0.7.1"
+mail-auth = "=0.7.2"
 futures = "0.3.31"
 tauri-plugin-log = "2"
 url = "2.5.7"

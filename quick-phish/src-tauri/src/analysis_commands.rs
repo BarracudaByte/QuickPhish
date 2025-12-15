@@ -1,10 +1,15 @@
 use eml_parser::eml::{EmailAddress, HeaderField, HeaderFieldValue};
 use eml_parser::parser::EmlParser;
 use linkify::{LinkFinder, LinkKind};
+use mail_auth::common::headers::Header;
+use mail_auth::hickory_resolver::proto::op::header;
 use mail_auth::{AuthenticatedMessage, DkimResult, MessageAuthenticator};
+use mail_auth::common::verify::VerifySignature;
+use mail_auth::spf::verify::SpfParameters;
 use mailparse::{MailHeaderMap, ParsedMail};
 use minijinja::{context, Environment};
 use serde_json::json;
+use std::cmp::min;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
@@ -13,7 +18,7 @@ use tauri::async_runtime::block_on;
 use tauri::AppHandle;
 use url::{Url};
 
-use crate::header_verification::HeaderVerification;
+use crate::header_verification::{HeaderVerification, HeaderCheckResult};
 use crate::indicators::Indicators;
 use crate::parsed_eml::ParsedEml;
 use crate::risk_data::RiskScore;
@@ -102,7 +107,28 @@ fn calculate_risk_score(
     }
 
     // DKIM
-    if !header_verification.dkim {
+    let dkim_pass = header_verification.dkim.iter().all(|dkim| dkim == &HeaderCheckResult::Pass);
+    //if !dkim_pass {
+        for result in &header_verification.dkim {
+            match result {
+                HeaderCheckResult::Pass => {
+                    risk_score.reasons.push(format!("Valid DKIM signature"));
+                },
+                HeaderCheckResult::Neutral(s) => {
+                    risk_score.reasons.push(format!("DKIM: {}", s.to_string()));
+                },
+                HeaderCheckResult::Fail(s) | HeaderCheckResult::Error(s) => {
+                    risk_score.reasons.push(format!("DKIM: {}", s.to_string()));
+                    score += 2;
+                },
+                HeaderCheckResult::None => {
+                    risk_score.reasons.push(format!("No DKIM signature"));
+                    score += 10;
+                }
+            }
+        }
+    //}
+    /*if !header_verification.dkim {
         let dkim_header = headers
             .iter()
             .find(|&header| header.name == "DKIM-Signature");
@@ -112,18 +138,50 @@ fn calculate_risk_score(
             risk_score.reasons.push(format!("No DKIM signature header"));
         }
         score += 5;
-    }
+    }*/
 
     // ARC
-    if !header_verification.arc {
+    match &header_verification.arc {
+        HeaderCheckResult::Pass => {
+            risk_score.reasons.push(format!("ARC chain verified"));
+        },
+        HeaderCheckResult::Neutral(s) => {
+            risk_score.reasons.push(format!("ARC: {}", s.to_string()));
+        },
+        HeaderCheckResult::Fail(s) | HeaderCheckResult::Error(s) => {
+            risk_score.reasons.push(format!("ARC: {}", s.to_string()));
+            score += 5;
+        },
+        HeaderCheckResult::None => {
+            
+        }
+    }
+
+    // SPF 
+    match &header_verification.spf {
+        HeaderCheckResult::Pass => {
+            risk_score.reasons.push(format!("Received SPF passed"));
+        },
+        HeaderCheckResult::Neutral(s) => {
+            risk_score.reasons.push(format!("SPF: {}", s.to_string()));
+        },
+        HeaderCheckResult::Fail(s) | HeaderCheckResult::Error(s) => {
+            risk_score.reasons.push(format!("SPF: {}", s.to_string()));
+            score += 5;
+        },
+        HeaderCheckResult::None => {
+            
+        }
+    }
+    /*if !header_verification.arc {
         score += 5;
         risk_score
             .reasons
             .push(format!("Failed ARC chain verification"));
-    }
+    }*/
 
     // updating the score
-    risk_score.score = score;
+    risk_score.score = min(100, score);
     return risk_score;
 }
 
@@ -201,19 +259,36 @@ fn parse_body(eml: &ParsedMail, simple_text: bool) -> String {
     }
 }
 
+
 async fn verify_headers(msg: &Vec<u8>) -> HeaderVerification {
     let mut header_verification = HeaderVerification::new();
-    let authenticator = MessageAuthenticator::new_cloudflare_tls().unwrap();
+    let authenticator = MessageAuthenticator::new_cloudflare().unwrap();
     let authenticated_message = AuthenticatedMessage::parse(msg).unwrap();
 
     // Validate DKIM Signature
     let result = authenticator.verify_dkim(&authenticated_message).await;
-    let dkim_pass = result.iter().all(|s| s.result() == &DkimResult::Pass);
-    header_verification.dkim = dkim_pass;
+
+    for output in &result {
+        if let Some(signature) = output.signature() {
+            println!("DKIM: selector={}, domain={}, result={:?}",
+                signature.selector(),
+                signature.domain(),
+                output.result()
+            );
+        }
+    }
+    //let dkim_pass = result.iter().all(|s| s.result() == &DkimResult::Pass);
+    header_verification.dkim = HeaderCheckResult::from_vec(result);
+    
 
     // Validate ARC chain
     let result = authenticator.verify_arc(&authenticated_message).await;
-    header_verification.arc = result.result() == &DkimResult::Pass;
+    header_verification.arc = HeaderCheckResult::from_result(result.result()); //result.result() == &DkimResult::Pass;
+
+    // Verify SPF
+    //let spf_parameters = SpfParameters::from(&authenticated_message);
+    //let spf_result = authenticator.verify_spf(&authenticated_message).await;
+    //header_verification.spf = HeaderCheckResult::from_spf_result(spf_result.result());
 
     // TODO: add SPF & DMARC
 
@@ -229,9 +304,10 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
     let mut file = file.unwrap();
 
     let mut buffer: Vec<u8> = Vec::new();
-    let read_result = file.read_to_end(&mut buffer);
+    let _read_result = file.read_to_end(&mut buffer);
     let parsed = mailparse::parse_mail(&buffer);
-    let header_verification = block_on(verify_headers(&buffer));
+    let mut header_verification = block_on(verify_headers(&buffer));
+    
     if parsed.is_err() {
         return json!({"error": "Coudln't parse the file."});
     }
@@ -280,6 +356,13 @@ pub fn load_eml(uri: &str, app_handle: AppHandle) -> serde_json::Value {
         .get_headers()
         .get_first_value("To")
         .unwrap_or_default();
+
+    let spf_received = parsed
+        .get_headers()
+        .get_first_value("Received-SPF")
+        .unwrap_or_default();
+    header_verification.spf = HeaderCheckResult::from_spf_received(spf_received);
+    println!("SPF!!! {:?}", header_verification.spf );
     /*let body_maybe = String::from_utf8(parsed.get_body_raw().unwrap());
     let body = match body_maybe {
         Ok(b) => b.to_string(),
