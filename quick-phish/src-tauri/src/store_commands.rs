@@ -6,6 +6,7 @@ use tauri_plugin_store::StoreExt; // StoreBuilder, Store,
 pub const SUMMARY_TEMPLATE: &'static str = "summary_template";
 pub const WHITELIST: &'static str = "whitelist";
 pub const BLACKLIST: &'static str = "blacklist";
+pub const SETTINGS: &'static str = "settings";
 pub const STORE_NAME: &'static str = "app_data.json";
 
 pub fn get_template(name: &str, app_handle: &AppHandle) -> serde_json::Value {
@@ -17,6 +18,17 @@ pub fn get_template(name: &str, app_handle: &AppHandle) -> serde_json::Value {
     }
 
     return default_template;
+}
+
+#[tauri::command]
+pub fn get_settings(app_handle: AppHandle) -> serde_json::Value {
+    let store = app_handle.store("app_data.json");
+    let default_settings = json!({ "whitelist": {"hide": false}, "blacklist": {"hide": false} });
+    if let Ok(store) = store {
+        let settings = store.get(SETTINGS).unwrap_or(default_settings.clone());
+        return settings;
+    }
+    return default_settings;
 }
 
 #[tauri::command]

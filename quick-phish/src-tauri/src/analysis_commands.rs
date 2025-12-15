@@ -13,6 +13,7 @@ use std::cmp::min;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
+use std::net::IpAddr;
 use std::str;
 use tauri::async_runtime::block_on;
 use tauri::AppHandle;
@@ -198,7 +199,11 @@ fn find_iocs(text: &str, with_scheme: bool) -> Indicators {
                 if let Ok(url) = Url::parse(link_str) {
                     if let Some(domain) = url.host_str() {
                         if domain.contains(".") {
-                            indicators.domains.insert(domain.to_string());
+                            if let Ok(_) = domain.parse::<IpAddr>() {
+                                indicators.ips.insert(domain.to_string());
+                            } else {
+                                indicators.domains.insert(domain.to_string());
+                            }
                         }
                     }
                 }

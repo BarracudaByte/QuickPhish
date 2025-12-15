@@ -229,16 +229,22 @@
                     
                 </div>
                 <div class="border rounded border-zinc-200 dark:border-zinc-700 my-2 font-light text-sm max-h-80 overflow-auto whitespace-nowrap p-2">
-                    <h3>Domains</h3>
+                    <h3>Domains {#if context.eml.indicators.domains.length == 0 } - None Found {/if}</h3>
                     <ul>
                         {#each context.eml.indicators.domains as domain}
                         <li>{domain}</li>
                         {/each}
                     </ul>
-                    <h3>URLs</h3>
+                    <h3>URLs {#if context.eml.indicators.urls.length == 0 } - None Found {/if}</h3>
                     <ul>
                         {#each context.eml.indicators.urls as url}
                         <li>{url}</li>
+                        {/each}
+                    </ul>
+                    <h3>IPs {#if context.eml.indicators.ips.length == 0 } - None Found {/if}</h3>
+                    <ul>
+                        {#each context.eml.indicators.ips as ip}
+                        <li>{ip}</li>
                         {/each}
                     </ul>
                     <h3>Emails</h3>

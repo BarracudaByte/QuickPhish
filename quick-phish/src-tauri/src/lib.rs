@@ -12,6 +12,7 @@ mod indicators;
 mod parsed_eml;
 mod risk_data;
 mod store_commands;
+mod settings;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -120,6 +121,7 @@ pub fn run() {
             analysis_commands::load_eml,
             store_commands::get_summary_template,
             store_commands::update_summary_template,
+            store_commands::get_settings,
             store_commands::get_lists,
             store_commands::update_list
         ])
